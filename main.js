@@ -1,6 +1,7 @@
-// main.js con integración de OpenFoodFacts
+// main.js con integración de OpenFoodFacts y botón separado de búsqueda
 
 const solicitarAccesoBtn = document.getElementById('solicitarAcceso');
+const botonBusqueda = document.getElementById('botonBusqueda');
 const entradaImagen = document.getElementById('entradaImagen');
 const resultadoDiv = document.getElementById('analisisResultado');
 const registroManualDiv = document.getElementById('registroManual');
@@ -10,8 +11,8 @@ let marcaGlobal = '';
 let nombreGlobal = '';
 let eanGlobal = '';
 
-// Al presionar el botón de escanear
-solicitarAccesoBtn.addEventListener('click', async () => {
+// Al presionar el botón de búsqueda principal
+botonBusqueda.addEventListener('click', async () => {
   const marca = document.getElementById('marcaEntrada').value.trim();
   const nombre = document.getElementById('nombreEntrada').value.trim();
   const ean = document.getElementById('eanEntrada')?.value.trim();
@@ -34,10 +35,14 @@ solicitarAccesoBtn.addEventListener('click', async () => {
   }
 
   resultadoDiv.innerHTML += `<p>🧪 Producto no encontrado en OpenFoodFacts. Puedes subir imagen para análisis OCR.</p>`;
+});
+
+// Botón para abrir la cámara o galería
+solicitarAccesoBtn.addEventListener('click', () => {
   entradaImagen.click();
 });
 
-// OCR en caso de que no se encuentre en OpenFoodFacts
+// OCR al seleccionar imagen
 entradaImagen.addEventListener('change', async (event) => {
   const file = event.target.files[0];
   if (!file) return;
@@ -107,10 +112,8 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
     let producto = null;
 
     if (data.status === 1 && data.product) {
-      // Resultado cuando se busca por EAN
       producto = data.product;
     } else if (data.products && data.products.length > 0) {
-      // Resultado cuando se busca por nombre
       producto = data.products[0];
     }
 
@@ -134,4 +137,3 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
     return null;
   }
 }
-
