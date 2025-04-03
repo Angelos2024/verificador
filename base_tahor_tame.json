@@ -20,25 +20,4 @@
       "azúcar",
       "aceite vegetal"
     ]
-  },
-  {
-    "id": 1743710858996,
-    "marca": "1",
-    "nombre": "1",
-    "pais": "1",
-    "ingredientes": [
-      "1"
-    ],
-    "estado": "pendiente"
-  },
-  {
-    "id": 1743710886790,
-    "marca": "ju",
-    "nombre": "yh",
-    "pais": "hu",
-    "ingredientes": [
-      "8j"
-    ],
-    "estado": "pendiente"
-  }
 ]
