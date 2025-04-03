@@ -1,8 +1,6 @@
-// main.js con OpenFoodFacts, nombre oficial y listado detallado de ingredientes y OCR mejorado
+// main.js sin OCR, con imagen del producto y registro manual si faltan ingredientes
 
-const solicitarAccesoBtn = document.getElementById('solicitarAcceso');
 const botonBusqueda = document.getElementById('botonBusqueda');
-const entradaImagen = document.getElementById('entradaImagen');
 const resultadoDiv = document.getElementById('analisisResultado');
 const registroManualDiv = document.getElementById('registroManual');
 const mensajeUsuario = document.getElementById('mensajeUsuario');
@@ -31,69 +29,10 @@ botonBusqueda.addEventListener('click', async () => {
 
   if (resultado) {
     resultadoDiv.innerHTML += resultado;
-    return;
+  } else {
+    resultadoDiv.innerHTML += `<p>🧪 Producto no encontrado en OpenFoodFacts. Puedes registrarlo manualmente.</p>`;
+    registroManualDiv.style.display = 'block';
   }
-
-  resultadoDiv.innerHTML += `<p>🧪 Producto no encontrado en OpenFoodFacts. Puedes subir imagen para análisis OCR.</p>`;
-});
-
-// Cargar imagen
-solicitarAccesoBtn.addEventListener('click', () => {
-  entradaImagen.click();
-});
-
-// OCR
-entradaImagen.addEventListener('change', async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  resultadoDiv.innerHTML = '<p><strong>Analizando imagen con OCR...</strong></p>';
-  registroManualDiv.style.display = 'none';
-
-  const reader = new FileReader();
-  reader.onload = async function () {
-    const imageDataUrl = reader.result;
-
-    try {
-      const { data: { text } } = await Tesseract.recognize(
-        imageDataUrl,
-        'spa',
-        { logger: m => console.log(m) }
-      );
-
-      const textoPlano = text.replace(/\n/g, ' ').toLowerCase();
-      resultadoDiv.innerHTML += `<p><strong>Texto detectado por OCR:</strong><br>${textoPlano}</p>`;
-
-      const ingredientesDetectados = textoPlano
-        .split(/,|\.|:/)
-        .map(i => i.trim())
-        .filter(i => i.length > 2);
-
-      if (ingredientesDetectados.length > 0) {
-        const contieneTame = ingredientesDetectados.some(i => isTame(i));
-        const htmlIngredientes = ingredientesDetectados.map(i =>
-          isTame(i) ? `<span style="color:red;">${i}</span>` : `<span>${i}</span>`
-        ).join(', ');
-
-        resultadoDiv.innerHTML += `
-          <p><strong>Ingredientes detectados por OCR:</strong><br>${htmlIngredientes}</p>
-          <p style="color:${contieneTame ? 'red' : 'green'};">
-          ${contieneTame ? '❌ No Apto (Tame)' : '✅ Apto (Tahor)'}</p>
-        `;
-      } else {
-        resultadoDiv.innerHTML += `<p style="color:orange">⚠️ No se detectaron ingredientes válidos.</p>`;
-      }
-
-      resultadoDiv.innerHTML += `<p style="color:blue">🔍 Producto no encontrado. Puedes registrarlo a continuación.</p>`;
-      registroManualDiv.style.display = 'block';
-
-    } catch (err) {
-      resultadoDiv.innerHTML = '<p style="color:red;">❌ Error al procesar la imagen.</p>';
-      console.error(err);
-    }
-  };
-
-  reader.readAsDataURL(file);
 });
 
 // Buscar en OpenFoodFacts
@@ -123,8 +62,16 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
 
     if (!producto) return null;
 
+    let imagen = producto.image_front_url
+      ? `<img src="${producto.image_front_url}" alt="Imagen del producto" style="max-width:200px;"><br><br>`
+      : '';
+
     if (!producto.ingredients_text) {
-      return `<p style="color:orange;">⚠️ Producto encontrado: <strong>${producto.product_name || 'Sin nombre'}</strong><br>No hay ingredientes disponibles para evaluación.</p>`;
+      registroManualDiv.style.display = 'block';
+      return `<p><strong>${producto.product_name || 'Producto sin nombre'}</strong></p>
+              ${imagen}
+              <p style="color:orange;">⚠️ Producto encontrado pero sin ingredientes disponibles.</p>
+              <p>Por favor, registra el producto manualmente si conoces sus ingredientes.</p>`;
     }
 
     const textoIngredientes = producto.ingredients_text.toLowerCase();
@@ -141,11 +88,15 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
 
     const contieneTame = lista.some(i => isTame(i));
 
+    if (contieneTame) {
+      registroManualDiv.style.display = 'block';
+    }
+
     return `<p><strong>${producto.product_name || 'Producto sin nombre oficial'}</strong></p>
+            ${imagen}
             <p>Ingredientes: ${htmlIngredientes}</p>
             <p style="color:${contieneTame ? 'red' : 'green'};">
             ${contieneTame ? '❌ No Apto (Tame)' : '✅ Apto (Tahor)'}</p>`;
-
   } catch (err) {
     console.error("Error al consultar OpenFoodFacts:", err);
     return null;
