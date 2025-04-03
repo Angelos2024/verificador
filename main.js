@@ -1,4 +1,4 @@
-// main.js - Integración con filtro por marca + nombre y coincidencia flexible
+// main.js con búsqueda combinada de marca + nombre y OCR
 
 const solicitarAccesoBtn = document.getElementById('solicitarAcceso');
 const entradaImagen = document.getElementById('entradaImagen');
@@ -6,7 +6,10 @@ const resultadoDiv = document.getElementById('analisisResultado');
 const registroManualDiv = document.getElementById('registroManual');
 const mensajeUsuario = document.getElementById('mensajeUsuario');
 
-// Botón principal
+let marcaGlobal = '';
+let nombreGlobal = '';
+
+// Al presionar el botón de escanear
 solicitarAccesoBtn.addEventListener('click', async () => {
   const marca = document.getElementById('marcaEntrada').value.trim();
   const nombre = document.getElementById('nombreEntrada').value.trim();
@@ -15,6 +18,9 @@ solicitarAccesoBtn.addEventListener('click', async () => {
     alert("⚠️ Por favor completa la marca y el nombre del producto.");
     return;
   }
+
+  marcaGlobal = marca;
+  nombreGlobal = nombre;
 
   resultadoDiv.innerHTML = '<p><strong>🔍 Buscando en base de datos...</strong></p>';
   const resultado = await buscarPorMarcaYNombre(marca, nombre);
@@ -27,7 +33,7 @@ solicitarAccesoBtn.addEventListener('click', async () => {
   }
 
   resultadoDiv.innerHTML += `<p>🧪 No se encontró coincidencia. Puedes subir imagen para análisis OCR.</p>`;
-  entradaImagen.click(); // permitir escaneo si no se encontró
+  entradaImagen.click();
 });
 
 // OCR si se elige imagen
@@ -50,12 +56,21 @@ entradaImagen.addEventListener('change', async (event) => {
       );
 
       const textoPlano = text.replace(/\n/g, ' ').toLowerCase();
-      resultadoDiv.innerHTML += `<p><strong>Texto detectado:</strong><br>${textoPlano}</p>`;
+      resultadoDiv.innerHTML += `<p><strong>Texto detectado por OCR:</strong><br>${textoPlano}</p>`;
 
       const ingredientesDetectados = textoPlano
         .split(/,|\.|:/)
         .map(i => i.trim())
         .filter(i => i.length > 2);
+
+      // 🔁 Segundo intento de búsqueda combinando marca+nombre nuevamente
+      const refuerzo = await buscarPorMarcaYNombre(marcaGlobal, nombreGlobal);
+      if (refuerzo) {
+        resultadoDiv.innerHTML += `<p style="color:${refuerzo.tahor ? 'green' : 'red'}">
+        ✔ Producto detectado (por marca + nombre):<br><strong>${refuerzo.nombre}</strong> (${refuerzo.marca})<br>
+        Resultado: ${refuerzo.tahor ? 'Tahor ✅' : 'Tame ❌'}</p>`;
+        return;
+      }
 
       if (!textoPlano.includes("ingrediente") || ingredientesDetectados.length < 3) {
         resultadoDiv.innerHTML += `<p style="color:orange">⚠️ No se pudo detectar una lista válida de ingredientes.</p>`;
@@ -73,7 +88,7 @@ entradaImagen.addEventListener('change', async (event) => {
   reader.readAsDataURL(file);
 });
 
-// Función flexible de búsqueda por marca y nombre
+// Normalización para comparar sin tildes ni símbolos
 function normalizarTexto(texto) {
   return texto.normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -81,6 +96,7 @@ function normalizarTexto(texto) {
     .toLowerCase();
 }
 
+// Comparación de marca + nombre
 async function buscarPorMarcaYNombre(marca, nombre) {
   try {
     const res = await fetch('https://raw.githubusercontent.com/angelos2024/verificador/main/base_tahor_tame.json');
@@ -93,7 +109,6 @@ async function buscarPorMarcaYNombre(marca, nombre) {
       const m = normalizarTexto(p.marca);
       const n = normalizarTexto(p.nombre);
 
-      // Coincidencia flexible: exacto, incluye, plural/singular
       return (
         m.includes(marcaN) && n.includes(nombreN) ||
         marcaN.includes(m) && nombreN.includes(n)
