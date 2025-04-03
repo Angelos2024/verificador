@@ -123,3 +123,42 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
     return null;
   }
 }
+
+// Enviar producto manual a revisión en GitHub
+document.getElementById('formRegistroManual').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const nuevo = {
+    id: Date.now(),
+    marca: document.getElementById('marcaManual').value.trim(),
+    nombre: document.getElementById('nombreManual').value.trim(),
+    pais: document.getElementById('paisManual').value.trim(),
+    ingredientes: document.getElementById('ingredientesManual').value.trim().split(',').map(x => x.trim().toLowerCase()),
+    tahor: false, // Se puede modificar si en el futuro se agrega checkbox
+    estado: 'pendiente'
+  };
+
+  try {
+    const res = await fetch("https://angelos2024-verificador.vercel.app/api/verificador-api", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tipo: "pendiente", producto: nuevo })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      mensajeUsuario.innerHTML = "✅ Producto enviado a revisión. ¡Gracias!";
+      document.getElementById('formRegistroManual').reset();
+      registroManualDiv.style.display = 'none';
+    } else {
+      console.error(data);
+      mensajeUsuario.innerHTML = "❌ Error al enviar producto.";
+    }
+
+  } catch (err) {
+    console.error(err);
+    mensajeUsuario.innerHTML = "❌ Error de red al contactar la API.";
+  }
+});
+
