@@ -1,6 +1,7 @@
-// main.js sin OCR, con imagen del producto y registro manual si faltan ingredientes
+// main.js con escaneo de código de barras, búsqueda en OpenFoodFacts y registro manual si faltan ingredientes
 
 const botonBusqueda = document.getElementById('botonBusqueda');
+const escanearCodigoBtn = document.getElementById('escanearCodigo');
 const resultadoDiv = document.getElementById('analisisResultado');
 const registroManualDiv = document.getElementById('registroManual');
 const mensajeUsuario = document.getElementById('mensajeUsuario');
@@ -8,6 +9,26 @@ const mensajeUsuario = document.getElementById('mensajeUsuario');
 let marcaGlobal = '';
 let nombreGlobal = '';
 let eanGlobal = '';
+
+// Escaneo de código de barras usando ZXing
+escanearCodigoBtn.addEventListener('click', async () => {
+  const codeReader = new ZXing.BrowserBarcodeReader();
+  const previewElem = document.createElement('video');
+  previewElem.setAttribute('style', 'width:100%; max-width:300px; margin-bottom:1rem;');
+  resultadoDiv.innerHTML = '<p><strong>📷 Escaneando... permite acceso a la cámara</strong></p>';
+  resultadoDiv.appendChild(previewElem);
+
+  try {
+    const result = await codeReader.decodeOnceFromVideoDevice(undefined, previewElem);
+    document.getElementById('eanEntrada').value = result.text;
+    resultadoDiv.innerHTML = `<p><strong>✅ Código detectado:</strong> ${result.text}</p>`;
+  } catch (err) {
+    console.error('Error escaneando:', err);
+    resultadoDiv.innerHTML = '<p style="color:red;">❌ No se pudo leer el código. Intenta nuevamente.</p>';
+  } finally {
+    codeReader.reset();
+  }
+});
 
 // Búsqueda general
 botonBusqueda.addEventListener('click', async () => {
