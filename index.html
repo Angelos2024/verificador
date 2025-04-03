@@ -7,7 +7,15 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Análsis</h1>
+  <h1>Análisis</h1>
+
+  <!-- Formulario obligatorio para marca y nombre del producto -->
+  <div id="formBusquedaProducto" style="margin-bottom: 1.5rem;">
+    <h2>Buscar Producto en la Base de Datos</h2>
+    <input type="text" id="marcaEntrada" placeholder="Marca del producto" required><br><br>
+    <input type="text" id="nombreEntrada" placeholder="Nombre del producto" required><br><br>
+    <small>⚠️ Estos campos son obligatorios antes de subir imagen</small>
+  </div>
 
   <!-- Botón para acceder a cámara o galería -->
   <button id="solicitarAcceso">📷 Escanear Producto</button>
@@ -38,9 +46,8 @@
   <!-- Botón para acceder al panel admin -->
   <button onclick="accederAdmin()">🔑 Acceso Administrador</button>
 
-<script src="tahor-checker.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
-<script src="main.js"></script>
-
+  <script src="tahor-checker.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
