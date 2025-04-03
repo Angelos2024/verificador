@@ -99,14 +99,18 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
       url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${nombreBusqueda}&search_simple=1&action=process&json=1`;
     }
 
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: { 'Accept': 'application/json' }
+    });
     const data = await res.json();
 
     let producto = null;
 
-    if (data.product) {
+    if (data.status === 1 && data.product) {
+      // Resultado cuando se busca por EAN
       producto = data.product;
     } else if (data.products && data.products.length > 0) {
+      // Resultado cuando se busca por nombre
       producto = data.products[0];
     }
 
@@ -130,3 +134,4 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
     return null;
   }
 }
+
