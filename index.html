@@ -1,56 +1,58 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escáner de productos</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Escáner de Pureza Bíblica</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <h1>Análisis</h1>
+  <main class="contenedor">
+    <h1>📦 Verificador de Pureza Bíblica</h1>
 
-  <!-- Formulario obligatorio para marca y nombre del producto -->
-  <div id="formBusquedaProducto" style="margin-bottom: 1.5rem;">
-    <h2>Buscar Producto</h2>
+    <section id="formBusquedaProducto">
+      <h2>Buscar Producto</h2>
 
-    <label for="marcaEntrada">Marca *</label><br>
-    <input type="text" id="marcaEntrada" placeholder="Ej: Chimex" required><br><br>
+      <label for="marcaEntrada">Marca *</label>
+      <input type="text" id="marcaEntrada" placeholder="Ej: Chimex" required>
 
-    <label for="nombreEntrada">Nombre del producto *</label><br>
-    <input type="text" id="nombreEntrada" placeholder="Ej: Salchicha con pavo" required><br><br>
+      <label for="nombreEntrada">Nombre del producto *</label>
+      <input type="text" id="nombreEntrada" placeholder="Ej: Salchicha con pavo" required>
 
-    <label for="eanEntrada">Código de barras (opcional)</label><br>
-    <input type="text" id="eanEntrada" placeholder="Escanea o escribe el código"><br>
-    <button id="escanearCodigo">📷 Escanear Código de Barras</button><br><br>
+      <label for="eanEntrada">Código de barras (opcional)</label>
+      <input type="text" id="eanEntrada" placeholder="Escanea o escribe el código">
 
-    <button id="botonBusqueda">🔍 Generar Búsqueda</button>
-  </div>
+      <div class="botones">
+        <button id="botonBusqueda">🔍 Buscar Producto</button>
+        <button id="escanearCodigo">📷 Escanear Código</button>
+      </div>
+    </section>
 
-  <!-- Resultado del Análisis -->
-  <div id="analisisResultado"></div>
+    <section id="analisisResultado"></section>
 
-  <!-- Sección para registrar manualmente si no se encuentra el producto -->
-  <div id="registroManual" style="display:none">
-    <h2>Registrar Producto</h2>
-    <form id="formRegistroManual">
-      <input type="text" id="marcaManual" placeholder="Marca del producto" required><br><br>
-      <input type="text" id="nombreManual" placeholder="Nombre del producto" required><br><br>
-      <input type="text" id="paisManual" placeholder="País o región" required><br><br>
-      <textarea id="ingredientesManual" placeholder="Ingredientes separados por coma" required></textarea><br><br>
-      <button type="submit">Guardar producto (en revisión)</button>
-    </form>
-    <p id="mensajeUsuario"></p>
-  </div>
+    <section id="registroManual" style="display:none">
+      <h2>Registrar Producto Manualmente</h2>
+      <form id="formRegistroManual">
+        <input type="text" id="marcaManual" placeholder="Marca del producto" required>
+        <input type="text" id="nombreManual" placeholder="Nombre del producto" required>
+        <input type="text" id="paisManual" placeholder="País o región" required>
+        <textarea id="ingredientesManual" placeholder="Ingredientes separados por coma" required></textarea>
+        <button type="submit">Enviar a Revisión</button>
+      </form>
+      <p id="mensajeUsuario"></p>
+    </section>
 
-  <!-- Panel de Administrador -->
-  <div id="adminPanel" style="display:none; margin-top:2rem">
-    <h2>🔐 Panel de Revisión de Productos</h2>
-    <div id="pendientesRevision"></div>
-  </div>
+    <section id="adminPanel" style="display:none; margin-top:2rem">
+      <h2>🔐 Panel de Revisión de Productos</h2>
+      <div id="pendientesRevision"></div>
+    </section>
 
-  <!-- Botón para acceder al panel admin -->
-  <button onclick="accederAdmin()">🔑 Acceso Administrador</button>
+    <div style="text-align:center; margin-top: 2rem;">
+      <button onclick="accederAdmin()">🔑 Acceso Administrador</button>
+    </div>
+  </main>
 
+  <!-- Scripts -->
   <script src="tahor-checker.js"></script>
   <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
   <script src="main.js"></script>
