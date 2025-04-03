@@ -1,0 +1,16 @@
+[
+  {
+    "nombre": "salchicha pavo chimex",
+    "marca": "Chimex",
+    "pais": "México",
+    "tahor": false,
+    "ingredientes": ["grasa de cerdo", "gelatina", "colorante e120"]
+  },
+  {
+    "nombre": "galletas maría gamesa",
+    "marca": "Gamesa",
+    "pais": "México",
+    "tahor": true,
+    "ingredientes": ["harina", "azúcar", "aceite vegetal"]
+  }
+]
