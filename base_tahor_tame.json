@@ -4,13 +4,31 @@
     "marca": "Chimex",
     "pais": "México",
     "tahor": false,
-    "ingredientes": ["grasa de cerdo", "gelatina", "colorante e120"]
+    "ingredientes": [
+      "grasa de cerdo",
+      "gelatina",
+      "colorante e120"
+    ]
   },
   {
     "nombre": "galletas maría gamesa",
     "marca": "Gamesa",
     "pais": "México",
     "tahor": true,
-    "ingredientes": ["harina", "azúcar", "aceite vegetal"]
+    "ingredientes": [
+      "harina",
+      "azúcar",
+      "aceite vegetal"
+    ]
+  },
+  {
+    "id": 1743710858996,
+    "marca": "1",
+    "nombre": "1",
+    "pais": "1",
+    "ingredientes": [
+      "1"
+    ],
+    "estado": "pendiente"
   }
 ]
