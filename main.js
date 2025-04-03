@@ -114,20 +114,40 @@ function accederAdmin() {
   });
 }
 
-function aprobarProducto(id) {
+async function aprobarProducto(id) {
   const pendientes = JSON.parse(localStorage.getItem('pendientesRevision') || '[]');
   const producto = pendientes.find(p => p.id === id);
   if (!producto) return;
-  
-  const aprobados = JSON.parse(localStorage.getItem('productosAprobados') || '[]');
-  aprobados.push(producto);
-  localStorage.setItem('productosAprobados', JSON.stringify(aprobados));
 
+  // Enviar a la API backend
+  try {
+    const response = await fetch("https://angelos2024-verificador.vercel.app/api/verificador-api", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(producto)
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      alert("✅ Producto aprobado y añadido a la base en GitHub");
+    } else {
+      console.error(data);
+      alert("❌ Error al subir producto a GitHub: " + data.error);
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ Error de red al intentar contactar la API.");
+  }
+
+  // Quitar de pendientes localmente
   const restantes = pendientes.filter(p => p.id !== id);
   localStorage.setItem('pendientesRevision', JSON.stringify(restantes));
-  alert('Producto aprobado y añadido a la base.');
   location.reload();
 }
+
 
 function rechazarProducto(id) {
   const pendientes = JSON.parse(localStorage.getItem('pendientesRevision') || '[]');
