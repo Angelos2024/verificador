@@ -1,4 +1,4 @@
-// main.js con búsqueda combinada de marca + nombre y OCR
+// main.js con integración de OpenFoodFacts
 
 const solicitarAccesoBtn = document.getElementById('solicitarAcceso');
 const entradaImagen = document.getElementById('entradaImagen');
@@ -8,11 +8,13 @@ const mensajeUsuario = document.getElementById('mensajeUsuario');
 
 let marcaGlobal = '';
 let nombreGlobal = '';
+let eanGlobal = '';
 
 // Al presionar el botón de escanear
 solicitarAccesoBtn.addEventListener('click', async () => {
   const marca = document.getElementById('marcaEntrada').value.trim();
   const nombre = document.getElementById('nombreEntrada').value.trim();
+  const ean = document.getElementById('eanEntrada')?.value.trim();
 
   if (!marca || !nombre) {
     alert("⚠️ Por favor completa la marca y el nombre del producto.");
@@ -21,22 +23,21 @@ solicitarAccesoBtn.addEventListener('click', async () => {
 
   marcaGlobal = marca;
   nombreGlobal = nombre;
+  eanGlobal = ean;
 
-  resultadoDiv.innerHTML = '<p><strong>🔍 Buscando en base de datos...</strong></p>';
-  const resultado = await buscarPorMarcaYNombre(marca, nombre);
+  resultadoDiv.innerHTML = '<p><strong>🔍 Buscando en OpenFoodFacts...</strong></p>';
+  const resultado = await buscarEnOpenFoodFacts(nombre, ean);
 
   if (resultado) {
-    resultadoDiv.innerHTML += `<p style="color:${resultado.tahor ? 'green' : 'red'}">
-    ✔ Producto encontrado:<br><strong>${resultado.nombre}</strong> (${resultado.marca})<br>
-    Resultado: ${resultado.tahor ? 'Tahor ✅' : 'Tame ❌'}</p>`;
+    resultadoDiv.innerHTML += resultado;
     return;
   }
 
-  resultadoDiv.innerHTML += `<p>🧪 No se encontró coincidencia. Puedes subir imagen para análisis OCR.</p>`;
+  resultadoDiv.innerHTML += `<p>🧪 Producto no encontrado en OpenFoodFacts. Puedes subir imagen para análisis OCR.</p>`;
   entradaImagen.click();
 });
 
-// OCR si se elige imagen
+// OCR en caso de que no se encuentre en OpenFoodFacts
 entradaImagen.addEventListener('change', async (event) => {
   const file = event.target.files[0];
   if (!file) return;
@@ -63,17 +64,15 @@ entradaImagen.addEventListener('change', async (event) => {
         .map(i => i.trim())
         .filter(i => i.length > 2);
 
-      // 🔁 Segundo intento de búsqueda combinando marca+nombre nuevamente
-      const refuerzo = await buscarPorMarcaYNombre(marcaGlobal, nombreGlobal);
-      if (refuerzo) {
-        resultadoDiv.innerHTML += `<p style="color:${refuerzo.tahor ? 'green' : 'red'}">
-        ✔ Producto detectado (por marca + nombre):<br><strong>${refuerzo.nombre}</strong> (${refuerzo.marca})<br>
-        Resultado: ${refuerzo.tahor ? 'Tahor ✅' : 'Tame ❌'}</p>`;
-        return;
-      }
-
-      if (!textoPlano.includes("ingrediente") || ingredientesDetectados.length < 3) {
-        resultadoDiv.innerHTML += `<p style="color:orange">⚠️ No se pudo detectar una lista válida de ingredientes.</p>`;
+      if (ingredientesDetectados.length > 0) {
+        const impuros = ingredientesDetectados.filter(i => isTame(i));
+        if (impuros.length > 0) {
+          resultadoDiv.innerHTML += `<p style="color:red">❌ No Apto (Tame)<br>Contiene: ${impuros.join(', ')}</p>`;
+        } else {
+          resultadoDiv.innerHTML += `<p style="color:green">✅ Apto (Tahor)</p>`;
+        }
+      } else {
+        resultadoDiv.innerHTML += `<p style="color:orange">⚠️ No se detectaron ingredientes válidos.</p>`;
       }
 
       resultadoDiv.innerHTML += `<p style="color:blue">🔍 Producto no encontrado. Puedes registrarlo a continuación.</p>`;
@@ -88,35 +87,46 @@ entradaImagen.addEventListener('change', async (event) => {
   reader.readAsDataURL(file);
 });
 
-// Normalización para comparar sin tildes ni símbolos
-function normalizarTexto(texto) {
-  return texto.normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s]/gi, "")
-    .toLowerCase();
-}
-
-// Comparación de marca + nombre
-async function buscarPorMarcaYNombre(marca, nombre) {
+// Buscar producto en OpenFoodFacts
+async function buscarEnOpenFoodFacts(nombre, ean) {
   try {
-    const res = await fetch('https://raw.githubusercontent.com/angelos2024/verificador/main/base_tahor_tame.json');
-    const base = await res.json();
+    let url = "";
 
-    const marcaN = normalizarTexto(marca);
-    const nombreN = normalizarTexto(nombre);
+    if (ean && /^[0-9]{8,14}$/.test(ean)) {
+      url = `https://world.openfoodfacts.org/api/v0/product/${ean}.json`;
+    } else {
+      const nombreBusqueda = encodeURIComponent(nombre);
+      url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${nombreBusqueda}&search_simple=1&action=process&json=1`;
+    }
 
-    return base.find(p => {
-      const m = normalizarTexto(p.marca);
-      const n = normalizarTexto(p.nombre);
+    const res = await fetch(url);
+    const data = await res.json();
 
-      return (
-        m.includes(marcaN) && n.includes(nombreN) ||
-        marcaN.includes(m) && nombreN.includes(n)
-      );
-    });
+    let producto = null;
 
-  } catch (error) {
-    console.error("Error al buscar en base de datos:", error);
+    if (data.product) {
+      producto = data.product;
+    } else if (data.products && data.products.length > 0) {
+      producto = data.products[0];
+    }
+
+    if (!producto || !producto.ingredients_text) return null;
+
+    const textoIngredientes = producto.ingredients_text.toLowerCase();
+    const lista = textoIngredientes
+      .split(/,|\.|:/)
+      .map(i => i.trim())
+      .filter(i => i.length > 2);
+
+    const impuros = lista.filter(i => isTame(i));
+    if (impuros.length > 0) {
+      return `<p style="color:red;">❌ No Apto (Tame)<br><small>Contiene: ${impuros.join(', ')}</small></p>`;
+    } else {
+      return `<p style="color:green;">✅ Apto (Tahor)</p>`;
+    }
+
+  } catch (err) {
+    console.error("Error al consultar OpenFoodFacts:", err);
     return null;
   }
 }
