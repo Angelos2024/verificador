@@ -11,16 +11,23 @@
 
   <!-- Formulario obligatorio para marca y nombre del producto -->
   <div id="formBusquedaProducto" style="margin-bottom: 1.5rem;">
-    <h2>Buscar Producto en la Base de Datos</h2>
-    <input type="text" id="marcaEntrada" placeholder="Marca del producto" required><br><br>
-    <input type="text" id="nombreEntrada" placeholder="Nombre del producto" required><br><br>
-    <input type="text" id="eanEntrada" placeholder="Código de barras (opcional)">
-    <small>⚠️ Estos campos son obligatorios antes de subir imagen</small>
-  </div>
+    <h2>Buscar Producto</h2>
 
-  <!-- Botón para acceder a cámara o galería -->
-  <button id="solicitarAcceso">📷 Escanear Producto</button>
-  <input type="file" accept="image/*" capture="environment" id="entradaImagen" style="display:none">
+    <label for="marcaEntrada">Marca *</label><br>
+    <input type="text" id="marcaEntrada" placeholder="Ej: Chimex" required><br><br>
+
+    <label for="nombreEntrada">Nombre del producto *</label><br>
+    <input type="text" id="nombreEntrada" placeholder="Ej: Salchicha con pavo" required><br><br>
+
+    <label for="eanEntrada">Código de barras (opcional)</label><br>
+    <input type="text" id="eanEntrada" placeholder="Ej: 7501040009921"><br><br>
+
+    <label for="entradaImagen">Imagen del producto (opcional)</label><br>
+    <button id="solicitarAcceso">📷 Subir Fotografía</button>
+    <input type="file" accept="image/*" capture="environment" id="entradaImagen" style="display:none"><br><br>
+
+    <button id="botonBusqueda">🔍 Generar Búsqueda</button>
+  </div>
 
   <!-- Resultado del OCR y del Análisis -->
   <div id="analisisResultado"></div>
