@@ -1,0 +1,149 @@
+// main.js - Nueva lógica unificada de escaneo, OCR, revisión y registro
+
+const solicitarAccesoBtn = document.getElementById('solicitarAcceso');
+const entradaImagen = document.getElementById('entradaImagen');
+const resultadoDiv = document.getElementById('analisisResultado');
+const registroManualDiv = document.getElementById('registroManual');
+const mensajeUsuario = document.getElementById('mensajeUsuario');
+
+// Al hacer clic en escanear producto
+solicitarAccesoBtn.addEventListener('click', () => {
+  entradaImagen.click();
+});
+
+entradaImagen.addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  resultadoDiv.innerHTML = '<p><strong>Analizando imagen...</strong></p>';
+  registroManualDiv.style.display = 'none';
+
+  const reader = new FileReader();
+  reader.onload = async function () {
+    const imageDataUrl = reader.result;
+
+    try {
+      const { data: { text } } = await Tesseract.recognize(
+        imageDataUrl,
+        'spa',
+        { logger: m => console.log(m) }
+      );
+
+      const textoPlano = text.replace(/\n/g, ' ').toLowerCase();
+      resultadoDiv.innerHTML = `<p><strong>Texto detectado:</strong><br>${textoPlano}</p>`;
+
+      const ingredientesDetectados = textoPlano
+        .split(/,|\.|:/)
+        .map(i => i.trim())
+        .filter(i => i.length > 2);
+
+      // Verificación secundaria contra base de datos
+      const resultadoBD = buscarProductoEnBaseDatos(textoPlano);
+      if (resultadoBD) {
+        resultadoDiv.innerHTML += `<p style="color:${resultadoBD.tahor ? 'green' : 'red'}"><strong>✔ Producto encontrado:</strong> ${resultadoBD.nombre}<br>Resultado: ${resultadoBD.tahor ? 'Tahor ✅' : 'Tame ❌'}</p>`;
+        return;
+      }
+
+      if (!textoPlano.includes("ingrediente") || ingredientesDetectados.length < 3) {
+        resultadoDiv.innerHTML += `<p style="color:orange">⚠️ No se pudo detectar una lista válida de ingredientes.</p>`;
+      }
+
+      resultadoDiv.innerHTML += `<p style="color:blue">🔍 Producto no encontrado. Puedes registrarlo a continuación.</p>`;
+      registroManualDiv.style.display = 'block';
+
+    } catch (err) {
+      resultadoDiv.innerHTML = '<p style="color:red;">❌ Error al procesar la imagen.</p>';
+      console.error(err);
+    }
+  };
+
+  reader.readAsDataURL(file);
+});
+
+// Registro manual de productos no encontrados
+document.getElementById('formRegistroManual').addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  const nuevo = {
+    id: Date.now(),
+    marca: document.getElementById('marcaManual').value.trim(),
+    nombre: document.getElementById('nombreManual').value.trim(),
+    pais: document.getElementById('paisManual').value.trim(),
+    ingredientes: document.getElementById('ingredientesManual').value.trim().split(',').map(x => x.trim().toLowerCase()),
+    estado: 'pendiente'
+  };
+
+  const pendientes = JSON.parse(localStorage.getItem('pendientesRevision') || '[]');
+  pendientes.push(nuevo);
+  localStorage.setItem('pendientesRevision', JSON.stringify(pendientes));
+
+  mensajeUsuario.innerHTML = "✅ Producto en revisión. ¡Gracias por tu aporte!";
+  document.getElementById('formRegistroManual').reset();
+  registroManualDiv.style.display = 'none';
+});
+
+// Simulación de base de datos local
+function buscarProductoEnBaseDatos(texto) {
+  const baseDatos = [
+    { nombre: "salchicha pavo chimex", tahor: false },
+    { nombre: "galletas maría gamesa", tahor: true }
+  ];
+  return baseDatos.find(p => texto.includes(p.nombre));
+}
+
+// Acceso administrador
+function accederAdmin() {
+  const clave = prompt("Introduce la clave de administrador:");
+  if (clave !== 'admin123') return alert('Clave incorrecta');
+
+  const panel = document.getElementById('adminPanel');
+  panel.style.display = 'block';
+
+  const pendientes = JSON.parse(localStorage.getItem('pendientesRevision') || '[]');
+  const contenedor = document.getElementById('pendientesRevision');
+
+  if (pendientes.length === 0) {
+    contenedor.innerHTML = '<p>No hay productos pendientes.</p>';
+    return;
+  }
+
+  contenedor.innerHTML = '';
+  pendientes.forEach(p => {
+    const div = document.createElement('div');
+    div.style.border = '1px solid #ccc';
+    div.style.padding = '1rem';
+    div.style.marginBottom = '1rem';
+
+    div.innerHTML = `<strong>${p.nombre}</strong> (${p.marca}, ${p.pais})<br>
+    Ingredientes: ${p.ingredientes.join(', ')}<br><br>
+    <button onclick="aprobarProducto(${p.id})">✔ Aprobar</button>
+    <button onclick="rechazarProducto(${p.id})">✖ Rechazar</button>`;
+
+    contenedor.appendChild(div);
+  });
+}
+
+function aprobarProducto(id) {
+  const pendientes = JSON.parse(localStorage.getItem('pendientesRevision') || '[]');
+  const producto = pendientes.find(p => p.id === id);
+  if (!producto) return;
+  
+  // Aquí podrías insertar el producto en la base final (simulada)
+  const aprobados = JSON.parse(localStorage.getItem('productosAprobados') || '[]');
+  aprobados.push(producto);
+  localStorage.setItem('productosAprobados', JSON.stringify(aprobados));
+
+  // Eliminar de pendientes
+  const restantes = pendientes.filter(p => p.id !== id);
+  localStorage.setItem('pendientesRevision', JSON.stringify(restantes));
+  alert('Producto aprobado y añadido a la base.');
+  location.reload();
+}
+
+function rechazarProducto(id) {
+  const pendientes = JSON.parse(localStorage.getItem('pendientesRevision') || '[]');
+  const restantes = pendientes.filter(p => p.id !== id);
+  localStorage.setItem('pendientesRevision', JSON.stringify(restantes));
+  alert('Producto rechazado.');
+  location.reload();
+}

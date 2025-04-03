@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escáner de Pureza Bíblica</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Escáner de Pureza Bíblica</h1>
+
+  <!-- Botón para acceder a cámara o galería -->
+  <button id="solicitarAcceso">📷 Escanear Producto</button>
+  <input type="file" accept="image/*" capture="environment" id="entradaImagen" style="display:none">
+
+  <!-- Resultado del OCR y del Análisis -->
+  <div id="analisisResultado"></div>
+
+  <!-- Sección para registrar manualmente si no se encuentra el producto -->
+  <div id="registroManual" style="display:none">
+    <h2>Registrar Producto</h2>
+    <form id="formRegistroManual">
+      <input type="text" id="marcaManual" placeholder="Marca del producto" required><br><br>
+      <input type="text" id="nombreManual" placeholder="Nombre del producto" required><br><br>
+      <input type="text" id="paisManual" placeholder="País o región" required><br><br>
+      <textarea id="ingredientesManual" placeholder="Ingredientes separados por coma" required></textarea><br><br>
+      <button type="submit">Guardar producto (en revisión)</button>
+    </form>
+    <p id="mensajeUsuario"></p>
+  </div>
+
+  <!-- Panel de Administrador -->
+  <div id="adminPanel" style="display:none; margin-top:2rem">
+    <h2>🔐 Panel de Revisión de Productos</h2>
+    <div id="pendientesRevision"></div>
+  </div>
+
+  <!-- Botón para acceder al panel admin -->
+  <button onclick="accederAdmin()">🔑 Acceso Administrador</button>
+
+  <script src="tahor-checker.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
