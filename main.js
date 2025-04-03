@@ -88,7 +88,7 @@ async function aprobarProducto(id) {
   if (!producto) return;
 
   try {
-    const response = await fetch("https://angelos2024-verificador.vercel.app/api/verificador-api", {
+   const response = await fetch("https://verificador-delta.vercel.app/api/verificador-api", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
