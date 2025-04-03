@@ -1,4 +1,4 @@
-// main.js - Nueva lógica unificada de escaneo, OCR, revisión y registro
+// main.js - Integración completa con backend en Vercel para subir productos aprobados
 
 const solicitarAccesoBtn = document.getElementById('solicitarAcceso');
 const entradaImagen = document.getElementById('entradaImagen');
@@ -6,7 +6,7 @@ const resultadoDiv = document.getElementById('analisisResultado');
 const registroManualDiv = document.getElementById('registroManual');
 const mensajeUsuario = document.getElementById('mensajeUsuario');
 
-// Al hacer clic en escanear producto
+// Escaneo con OCR
 solicitarAccesoBtn.addEventListener('click', () => {
   entradaImagen.click();
 });
@@ -37,7 +37,6 @@ entradaImagen.addEventListener('change', async (event) => {
         .map(i => i.trim())
         .filter(i => i.length > 2);
 
-      // Verificación secundaria contra base de datos remota
       const resultadoBD = await buscarProductoEnBaseDatos(textoPlano);
       if (resultadoBD) {
         resultadoDiv.innerHTML += `<p style="color:${resultadoBD.tahor ? 'green' : 'red'}"><strong>✔ Producto encontrado:</strong> ${resultadoBD.nombre}<br>Resultado: ${resultadoBD.tahor ? 'Tahor ✅' : 'Tame ❌'}</p>`;
@@ -60,7 +59,7 @@ entradaImagen.addEventListener('change', async (event) => {
   reader.readAsDataURL(file);
 });
 
-// Registro manual de productos no encontrados
+// Registro manual
 document.getElementById('formRegistroManual').addEventListener('submit', (e) => {
   e.preventDefault();
 
@@ -82,7 +81,49 @@ document.getElementById('formRegistroManual').addEventListener('submit', (e) => 
   registroManualDiv.style.display = 'none';
 });
 
-// Acceso administrador
+// Función admin: aprobar y subir producto a GitHub
+async function aprobarProducto(id) {
+  const pendientes = JSON.parse(localStorage.getItem('pendientesRevision') || '[]');
+  const producto = pendientes.find(p => p.id === id);
+  if (!producto) return;
+
+  try {
+    const response = await fetch("https://angelos2024-verificador.vercel.app/api/verificador-api", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(producto)
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      alert("✅ Producto aprobado y añadido a la base en GitHub");
+    } else {
+      console.error(data);
+      alert("❌ Error al subir producto a GitHub: " + data.error);
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ Error de red al intentar contactar la API.");
+  }
+
+  const restantes = pendientes.filter(p => p.id !== id);
+  localStorage.setItem('pendientesRevision', JSON.stringify(restantes));
+  location.reload();
+}
+
+// Rechazar producto
+function rechazarProducto(id) {
+  const pendientes = JSON.parse(localStorage.getItem('pendientesRevision') || '[]');
+  const restantes = pendientes.filter(p => p.id !== id);
+  localStorage.setItem('pendientesRevision', JSON.stringify(restantes));
+  alert('Producto rechazado.');
+  location.reload();
+}
+
+// Panel admin
 function accederAdmin() {
   const clave = prompt("Introduce la clave de administrador:");
   if (clave !== 'admin123') return alert('Clave incorrecta');
@@ -114,50 +155,7 @@ function accederAdmin() {
   });
 }
 
-async function aprobarProducto(id) {
-  const pendientes = JSON.parse(localStorage.getItem('pendientesRevision') || '[]');
-  const producto = pendientes.find(p => p.id === id);
-  if (!producto) return;
-
-  // Enviar a la API backend
-  try {
-    const response = await fetch("https://angelos2024-verificador.vercel.app/api/verificador-api", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(producto)
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      alert("✅ Producto aprobado y añadido a la base en GitHub");
-    } else {
-      console.error(data);
-      alert("❌ Error al subir producto a GitHub: " + data.error);
-    }
-
-  } catch (err) {
-    console.error(err);
-    alert("❌ Error de red al intentar contactar la API.");
-  }
-
-  // Quitar de pendientes localmente
-  const restantes = pendientes.filter(p => p.id !== id);
-  localStorage.setItem('pendientesRevision', JSON.stringify(restantes));
-  location.reload();
-}
-
-
-function rechazarProducto(id) {
-  const pendientes = JSON.parse(localStorage.getItem('pendientesRevision') || '[]');
-  const restantes = pendientes.filter(p => p.id !== id);
-  localStorage.setItem('pendientesRevision', JSON.stringify(restantes));
-  alert('Producto rechazado.');
-  location.reload();
-}
-
-// Base de datos remota en GitHub
+// Buscar producto en base JSON remota
 async function buscarProductoEnBaseDatos(texto) {
   try {
     const res = await fetch('https://raw.githubusercontent.com/angelos2024/verificador/main/base_tahor_tame.json');
