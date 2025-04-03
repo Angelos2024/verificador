@@ -1,6 +1,6 @@
 // verificador-api.js - Maneja solicitudes POST para pendientes y aprobaciones
 
-import { Octokit } from "@octokit/rest";
+const { Octokit } = require("@octokit/rest");
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
