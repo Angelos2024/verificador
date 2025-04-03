@@ -1,4 +1,4 @@
-// main.js con escaneo de código de barras, búsqueda en OpenFoodFacts y registro manual si faltan ingredientes
+// main.js con escaneo de código de barras, validación de duplicados y revisión manual en GitHub
 
 const botonBusqueda = document.getElementById('botonBusqueda');
 const escanearCodigoBtn = document.getElementById('escanearCodigo');
@@ -124,7 +124,8 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
   }
 }
 
-// Enviar producto manual a revisión en GitHub
+// Enviar producto manual a revisión en GitHub, con validación de duplicado
+
 document.getElementById('formRegistroManual').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -134,11 +135,25 @@ document.getElementById('formRegistroManual').addEventListener('submit', async (
     nombre: document.getElementById('nombreManual').value.trim(),
     pais: document.getElementById('paisManual').value.trim(),
     ingredientes: document.getElementById('ingredientesManual').value.trim().split(',').map(x => x.trim().toLowerCase()),
-    tahor: false, // Se puede modificar si en el futuro se agrega checkbox
+    tahor: false,
     estado: 'pendiente'
   };
 
   try {
+    const listaPendientes = await fetch("https://raw.githubusercontent.com/angelos2024/verificador/main/pendientes.json")
+      .then(r => r.json());
+
+    const existe = listaPendientes.some(p =>
+      p.nombre.toLowerCase() === nuevo.nombre.toLowerCase() &&
+      p.marca.toLowerCase() === nuevo.marca.toLowerCase()
+    );
+
+    if (existe) {
+      mensajeUsuario.innerHTML = "⚠️ Este producto ya está en revisión. ¡Gracias por tu contribución!";
+      registroManualDiv.style.display = 'none';
+      return;
+    }
+
     const res = await fetch("https://angelos2024-verificador.vercel.app/api/verificador-api", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -161,4 +176,3 @@ document.getElementById('formRegistroManual').addEventListener('submit', async (
     mensajeUsuario.innerHTML = "❌ Error de red al contactar la API.";
   }
 });
-
