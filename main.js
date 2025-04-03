@@ -1,4 +1,4 @@
-// main.js con integración de OpenFoodFacts y botón separado de búsqueda
+// main.js con OpenFoodFacts, nombre oficial y listado detallado de ingredientes y OCR mejorado
 
 const solicitarAccesoBtn = document.getElementById('solicitarAcceso');
 const botonBusqueda = document.getElementById('botonBusqueda');
@@ -11,7 +11,7 @@ let marcaGlobal = '';
 let nombreGlobal = '';
 let eanGlobal = '';
 
-// Al presionar el botón de búsqueda principal
+// Búsqueda general
 botonBusqueda.addEventListener('click', async () => {
   const marca = document.getElementById('marcaEntrada').value.trim();
   const nombre = document.getElementById('nombreEntrada').value.trim();
@@ -37,12 +37,12 @@ botonBusqueda.addEventListener('click', async () => {
   resultadoDiv.innerHTML += `<p>🧪 Producto no encontrado en OpenFoodFacts. Puedes subir imagen para análisis OCR.</p>`;
 });
 
-// Botón para abrir la cámara o galería
+// Cargar imagen
 solicitarAccesoBtn.addEventListener('click', () => {
   entradaImagen.click();
 });
 
-// OCR al seleccionar imagen
+// OCR
 entradaImagen.addEventListener('change', async (event) => {
   const file = event.target.files[0];
   if (!file) return;
@@ -70,12 +70,16 @@ entradaImagen.addEventListener('change', async (event) => {
         .filter(i => i.length > 2);
 
       if (ingredientesDetectados.length > 0) {
-        const impuros = ingredientesDetectados.filter(i => isTame(i));
-        if (impuros.length > 0) {
-          resultadoDiv.innerHTML += `<p style="color:red">❌ No Apto (Tame)<br>Contiene: ${impuros.join(', ')}</p>`;
-        } else {
-          resultadoDiv.innerHTML += `<p style="color:green">✅ Apto (Tahor)</p>`;
-        }
+        const contieneTame = ingredientesDetectados.some(i => isTame(i));
+        const htmlIngredientes = ingredientesDetectados.map(i =>
+          isTame(i) ? `<span style="color:red;">${i}</span>` : `<span>${i}</span>`
+        ).join(', ');
+
+        resultadoDiv.innerHTML += `
+          <p><strong>Ingredientes detectados por OCR:</strong><br>${htmlIngredientes}</p>
+          <p style="color:${contieneTame ? 'red' : 'green'};">
+          ${contieneTame ? '❌ No Apto (Tame)' : '✅ Apto (Tahor)'}</p>
+        `;
       } else {
         resultadoDiv.innerHTML += `<p style="color:orange">⚠️ No se detectaron ingredientes válidos.</p>`;
       }
@@ -92,7 +96,7 @@ entradaImagen.addEventListener('change', async (event) => {
   reader.readAsDataURL(file);
 });
 
-// Buscar producto en OpenFoodFacts
+// Buscar en OpenFoodFacts
 async function buscarEnOpenFoodFacts(nombre, ean) {
   try {
     let url = "";
@@ -117,12 +121,11 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
       producto = data.products[0];
     }
 
-if (!producto) return null;
+    if (!producto) return null;
 
-if (!producto.ingredients_text) {
-  return `<p style="color:orange;">⚠️ Producto encontrado pero sin ingredientes disponibles.<br>No se puede evaluar si es Tahor o Tame.</p>`;
-}
-
+    if (!producto.ingredients_text) {
+      return `<p style="color:orange;">⚠️ Producto encontrado: <strong>${producto.product_name || 'Sin nombre'}</strong><br>No hay ingredientes disponibles para evaluación.</p>`;
+    }
 
     const textoIngredientes = producto.ingredients_text.toLowerCase();
     const lista = textoIngredientes
@@ -130,12 +133,18 @@ if (!producto.ingredients_text) {
       .map(i => i.trim())
       .filter(i => i.length > 2);
 
-    const impuros = lista.filter(i => isTame(i));
-    if (impuros.length > 0) {
-      return `<p style="color:red;">❌ No Apto (Tame)<br><small>Contiene: ${impuros.join(', ')}</small></p>`;
-    } else {
-      return `<p style="color:green;">✅ Apto (Tahor)</p>`;
-    }
+    let htmlIngredientes = lista.map(ing => {
+      return isTame(ing)
+        ? `<span style="color:red;">${ing}</span>`
+        : `<span>${ing}</span>`;
+    }).join(', ');
+
+    const contieneTame = lista.some(i => isTame(i));
+
+    return `<p><strong>${producto.product_name || 'Producto sin nombre oficial'}</strong></p>
+            <p>Ingredientes: ${htmlIngredientes}</p>
+            <p style="color:${contieneTame ? 'red' : 'green'};">
+            ${contieneTame ? '❌ No Apto (Tame)' : '✅ Apto (Tahor)'}</p>`;
 
   } catch (err) {
     console.error("Error al consultar OpenFoodFacts:", err);
