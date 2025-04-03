@@ -117,7 +117,12 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
       producto = data.products[0];
     }
 
-    if (!producto || !producto.ingredients_text) return null;
+if (!producto) return null;
+
+if (!producto.ingredients_text) {
+  return `<p style="color:orange;">⚠️ Producto encontrado pero sin ingredientes disponibles.<br>No se puede evaluar si es Tahor o Tame.</p>`;
+}
+
 
     const textoIngredientes = producto.ingredients_text.toLowerCase();
     const lista = textoIngredientes
