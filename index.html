@@ -22,14 +22,10 @@
     <label for="eanEntrada">Código de barras (opcional)</label><br>
     <input type="text" id="eanEntrada" placeholder="Ej: 7501040009921"><br><br>
 
-    <label for="entradaImagen">Imagen del producto (opcional)</label><br>
-    <button id="solicitarAcceso">📷 Subir Fotografía</button>
-    <input type="file" accept="image/*" capture="environment" id="entradaImagen" style="display:none"><br><br>
-
     <button id="botonBusqueda">🔍 Generar Búsqueda</button>
   </div>
 
-  <!-- Resultado del OCR y del Análisis -->
+  <!-- Resultado del Análisis -->
   <div id="analisisResultado"></div>
 
   <!-- Sección para registrar manualmente si no se encuentra el producto -->
@@ -55,7 +51,6 @@
   <button onclick="accederAdmin()">🔑 Acceso Administrador</button>
 
   <script src="tahor-checker.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
