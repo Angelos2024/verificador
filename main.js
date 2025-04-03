@@ -1,4 +1,4 @@
-// main.js con escaneo de código de barras, validación de duplicados y revisión manual en GitHub
+// main.js con escaneo opcional, registro abierto y diseño adaptable
 
 const botonBusqueda = document.getElementById('botonBusqueda');
 const escanearCodigoBtn = document.getElementById('escanearCodigo');
@@ -10,27 +10,29 @@ let marcaGlobal = '';
 let nombreGlobal = '';
 let eanGlobal = '';
 
-// Escaneo de código de barras usando ZXing
-escanearCodigoBtn.addEventListener('click', async () => {
-  const codeReader = new ZXing.BrowserBarcodeReader();
-  const previewElem = document.createElement('video');
-  previewElem.setAttribute('style', 'width:100%; max-width:300px; margin-bottom:1rem;');
-  resultadoDiv.innerHTML = '<p><strong>📷 Escaneando... permite acceso a la cámara</strong></p>';
-  resultadoDiv.appendChild(previewElem);
+// Escaneo de código de barras usando ZXing (opcional)
+if (escanearCodigoBtn) {
+  escanearCodigoBtn.addEventListener('click', async () => {
+    const codeReader = new ZXing.BrowserBarcodeReader();
+    const previewElem = document.createElement('video');
+    previewElem.setAttribute('style', 'width:100%; max-width:300px; margin-bottom:1rem;');
+    resultadoDiv.innerHTML = '<p><strong>📷 Escaneando... permite acceso a la cámara</strong></p>';
+    resultadoDiv.appendChild(previewElem);
 
-  try {
-    const result = await codeReader.decodeOnceFromVideoDevice(undefined, previewElem);
-    document.getElementById('eanEntrada').value = result.text;
-    resultadoDiv.innerHTML = `<p><strong>✅ Código detectado:</strong> ${result.text}</p>`;
-  } catch (err) {
-    console.error('Error escaneando:', err);
-    resultadoDiv.innerHTML = '<p style="color:red;">❌ No se pudo leer el código. Intenta nuevamente.</p>';
-  } finally {
-    codeReader.reset();
-  }
-});
+    try {
+      const result = await codeReader.decodeOnceFromVideoDevice(undefined, previewElem);
+      document.getElementById('eanEntrada').value = result.text;
+      resultadoDiv.innerHTML = `<p><strong>✅ Código detectado:</strong> ${result.text}</p>`;
+    } catch (err) {
+      console.error('Error escaneando:', err);
+      resultadoDiv.innerHTML = '<p style="color:red;">❌ No se pudo leer el código. Intenta nuevamente.</p>';
+    } finally {
+      codeReader.reset();
+    }
+  });
+}
 
-// Búsqueda general
+// Búsqueda general (marca y nombre obligatorios, código opcional)
 botonBusqueda.addEventListener('click', async () => {
   const marca = document.getElementById('marcaEntrada').value.trim();
   const nombre = document.getElementById('nombreEntrada').value.trim();
@@ -51,7 +53,7 @@ botonBusqueda.addEventListener('click', async () => {
   if (resultado) {
     resultadoDiv.innerHTML += resultado;
   } else {
-    resultadoDiv.innerHTML += `<p>🧪 Producto no encontrado en OpenFoodFacts. Puedes registrarlo manualmente.</p>`;
+    resultadoDiv.innerHTML += `<p>🧪 Producto no encontrado. Puedes registrarlo a continuación.</p>`;
     registroManualDiv.style.display = 'block';
   }
 });
@@ -124,8 +126,7 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
   }
 }
 
-// Enviar producto manual a revisión en GitHub, con validación de duplicado
-
+// Registro manual con validación de duplicados y carga a GitHub
 document.getElementById('formRegistroManual').addEventListener('submit', async (e) => {
   e.preventDefault();
 
