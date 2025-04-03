@@ -37,8 +37,8 @@ entradaImagen.addEventListener('change', async (event) => {
         .map(i => i.trim())
         .filter(i => i.length > 2);
 
-      // Verificación secundaria contra base de datos
-      const resultadoBD = buscarProductoEnBaseDatos(textoPlano);
+      // Verificación secundaria contra base de datos remota
+      const resultadoBD = await buscarProductoEnBaseDatos(textoPlano);
       if (resultadoBD) {
         resultadoDiv.innerHTML += `<p style="color:${resultadoBD.tahor ? 'green' : 'red'}"><strong>✔ Producto encontrado:</strong> ${resultadoBD.nombre}<br>Resultado: ${resultadoBD.tahor ? 'Tahor ✅' : 'Tame ❌'}</p>`;
         return;
@@ -82,15 +82,6 @@ document.getElementById('formRegistroManual').addEventListener('submit', (e) => 
   registroManualDiv.style.display = 'none';
 });
 
-// Simulación de base de datos local
-function buscarProductoEnBaseDatos(texto) {
-  const baseDatos = [
-    { nombre: "salchicha pavo chimex", tahor: false },
-    { nombre: "galletas maría gamesa", tahor: true }
-  ];
-  return baseDatos.find(p => texto.includes(p.nombre));
-}
-
 // Acceso administrador
 function accederAdmin() {
   const clave = prompt("Introduce la clave de administrador:");
@@ -128,12 +119,10 @@ function aprobarProducto(id) {
   const producto = pendientes.find(p => p.id === id);
   if (!producto) return;
   
-  // Aquí podrías insertar el producto en la base final (simulada)
   const aprobados = JSON.parse(localStorage.getItem('productosAprobados') || '[]');
   aprobados.push(producto);
   localStorage.setItem('productosAprobados', JSON.stringify(aprobados));
 
-  // Eliminar de pendientes
   const restantes = pendientes.filter(p => p.id !== id);
   localStorage.setItem('pendientesRevision', JSON.stringify(restantes));
   alert('Producto aprobado y añadido a la base.');
@@ -146,4 +135,16 @@ function rechazarProducto(id) {
   localStorage.setItem('pendientesRevision', JSON.stringify(restantes));
   alert('Producto rechazado.');
   location.reload();
+}
+
+// Base de datos remota en GitHub
+async function buscarProductoEnBaseDatos(texto) {
+  try {
+    const res = await fetch('https://raw.githubusercontent.com/angelos2024/verificador/main/base_tahor_tame.json');
+    const baseDatos = await res.json();
+    return baseDatos.find(p => texto.includes(p.nombre.toLowerCase()));
+  } catch (error) {
+    console.error("Error al cargar la base remota:", error);
+    return null;
+  }
 }
