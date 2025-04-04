@@ -150,6 +150,7 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
   }
 }
 
+
 function abrirTahor() {
   document.getElementById('menuInicial').style.display = 'none';
   document.getElementById('bloqueTahor').style.display = 'block';
@@ -157,4 +158,3 @@ function abrirTahor() {
   resultadoDiv.innerHTML = '';
   mensajeUsuario.innerHTML = '';
 }
-
