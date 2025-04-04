@@ -1,4 +1,3 @@
-
 const { Configuration, OpenAIApi } = require("openai");
 
 module.exports = async (req, res) => {
@@ -13,8 +12,8 @@ module.exports = async (req, res) => {
   if (!apiKey) return res.status(500).json({ error: "Falta clave de OpenAI" });
 
   const { nombre, ingredientes } = req.body;
-  if (!nombre || !ingredientes || !Array.isArray(ingredientes)) {
-    return res.status(400).json({ error: "Faltan datos de producto" });
+  if (!nombre || !Array.isArray(ingredientes)) {
+    return res.status(400).json({ error: "Faltan datos de producto o ingredientes no válidos" });
   }
 
   try {
@@ -23,10 +22,10 @@ module.exports = async (req, res) => {
 
     const prompt = `
 Eres un experto en leyes alimentarias de Levítico 11.
-Analiza el siguiente producto y responde si es "Tahor" (apto) o "Tame" (no apto) según sus ingredientes.
+Analiza el siguiente producto y responde si es "Tahor" (apto) o "Tame" (no apto) según sus ingredientes o por su nombre si no se conocen los ingredientes.
 
 Nombre del producto: ${nombre}
-Ingredientes: ${ingredientes.join(", ")}
+Ingredientes: ${ingredientes.length ? ingredientes.join(", ") : "No especificados"}
 
 Responde SOLO en formato JSON como este:
 { "resultado": "tahor" o "tame", "motivo": "razón breve" }
