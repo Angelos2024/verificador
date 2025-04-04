@@ -1,4 +1,4 @@
-// main.js con escaneo opcional, registro abierto y diseño adaptable
+// main.js con escaneo opcional, registro abierto, base local y diseño adaptable
 
 const botonBusqueda = document.getElementById('botonBusqueda');
 const escanearCodigoBtn = document.getElementById('escanearCodigo');
@@ -32,7 +32,6 @@ if (escanearCodigoBtn) {
   });
 }
 
-// Búsqueda general (marca y nombre obligatorios, código opcional)
 botonBusqueda.addEventListener('click', async () => {
   const marca = document.getElementById('marcaEntrada').value.trim();
   const nombre = document.getElementById('nombreEntrada').value.trim();
@@ -47,7 +46,7 @@ botonBusqueda.addEventListener('click', async () => {
   nombreGlobal = nombre;
   eanGlobal = ean;
 
-  resultadoDiv.innerHTML = '<p><strong>🔍 Buscando en OpenFoodFacts...</strong></p>';
+  resultadoDiv.innerHTML = '<p><strong>🔍 Buscando en base de datos local...</strong></p>';
   const resultado = await buscarEnOpenFoodFacts(nombre, ean);
 
   if (resultado) {
@@ -58,11 +57,33 @@ botonBusqueda.addEventListener('click', async () => {
   }
 });
 
-// Buscar en OpenFoodFacts
 async function buscarEnOpenFoodFacts(nombre, ean) {
   try {
-    let url = "";
+    let base = await fetch("https://raw.githubusercontent.com/angelos2024/verificador/main/base_tahor_tame.json")
+      .then(r => r.json());
 
+    const nombreLower = nombre.toLowerCase();
+    const marcaLower = marcaGlobal.toLowerCase();
+
+    const yaRegistrado = base.find(p =>
+      p.nombre.toLowerCase() === nombreLower &&
+      p.marca.toLowerCase() === marcaLower
+    );
+
+    if (yaRegistrado) {
+      const htmlIngredientes = yaRegistrado.ingredientes.map(ing => {
+        return isTame(ing)
+          ? `<span style="color:red;">${ing}</span>`
+          : `<span>${ing}</span>`;
+      }).join(', ');
+
+      return `<p><strong>${yaRegistrado.nombre}</strong> – ${yaRegistrado.marca}</p>
+              <p>Ingredientes: ${htmlIngredientes}</p>
+              <p style="color:${yaRegistrado.tahor ? 'green' : 'red'};">
+              ${yaRegistrado.tahor ? '✅ Apto (Tahor)' : '❌ No Apto (Tame)'}</p>`;
+    }
+
+    let url = "";
     if (ean && /^[0-9]{8,14}$/.test(ean)) {
       url = `https://world.openfoodfacts.org/api/v0/product/${ean}.json`;
     } else {
@@ -70,13 +91,10 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
       url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${nombreBusqueda}&search_simple=1&action=process&json=1`;
     }
 
-    const res = await fetch(url, {
-      headers: { 'Accept': 'application/json' }
-    });
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
     const data = await res.json();
 
     let producto = null;
-
     if (data.status === 1 && data.product) {
       producto = data.product;
     } else if (data.products && data.products.length > 0) {
@@ -110,10 +128,7 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
     }).join(', ');
 
     const contieneTame = lista.some(i => isTame(i));
-
-    if (contieneTame) {
-      registroManualDiv.style.display = 'block';
-    }
+    if (contieneTame) registroManualDiv.style.display = 'block';
 
     return `<p><strong>${producto.product_name || 'Producto sin nombre oficial'}</strong></p>
             ${imagen}
@@ -124,148 +139,4 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
     console.error("Error al consultar OpenFoodFacts:", err);
     return null;
   }
-}
-
-// Registro manual con validación de duplicados y carga a GitHub
-document.getElementById('formRegistroManual').addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const nuevo = {
-    id: Date.now(),
-    marca: document.getElementById('marcaManual').value.trim(),
-    nombre: document.getElementById('nombreManual').value.trim(),
-    pais: document.getElementById('paisManual').value.trim(),
-    ingredientes: document.getElementById('ingredientesManual').value.trim().split(',').map(x => x.trim().toLowerCase()),
-    tahor: false,
-    estado: 'pendiente'
-  };
-
-  try {
-    const listaPendientes = await fetch("https://raw.githubusercontent.com/angelos2024/verificador/main/pendientes.json")
-      .then(r => r.json());
-
-    const existe = listaPendientes.some(p =>
-      p.nombre.toLowerCase() === nuevo.nombre.toLowerCase() &&
-      p.marca.toLowerCase() === nuevo.marca.toLowerCase()
-    );
-
-    if (existe) {
-      mensajeUsuario.innerHTML = "⚠️ Este producto ya está en revisión. ¡Gracias por tu contribución!";
-      return;
-    }
-
-    const res = await fetch("https://verificador-git-main-angels-projects-b6cdd5b1.vercel.app/api/verificador-api", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tipo: "pendiente", producto: nuevo })
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      mensajeUsuario.innerHTML = "✅ Producto enviado a revisión. ¡Gracias!";
-      document.getElementById('formRegistroManual').reset();
-      // No ocultamos el formulario para permitir más aportes
-    } else {
-      console.error(data);
-      mensajeUsuario.innerHTML = "❌ Error al enviar producto.";
-    }
-
-  } catch (err) {
-    console.error(err);
-    mensajeUsuario.innerHTML = "❌ Error de red al contactar la API.";
-  }
-});
-
-// Panel de administración
-async function accederAdmin() {
-  const pass = prompt("🔐 Ingresa la contraseña de administrador:");
-  if (pass !== "lev11") {
-    alert("❌ Contraseña incorrecta");
-    return;
-  }
-
-  const adminPanel = document.getElementById('adminPanel');
-  adminPanel.style.display = 'block';
-  adminPanel.innerHTML = "<h2>🔐 Panel de Revisión de Productos</h2><p>Cargando productos pendientes...</p>";
-
-  try {
-    const res = await fetch("https://raw.githubusercontent.com/angelos2024/verificador/main/pendientes.json");
-    const lista = await res.json();
-
-    if (!lista.length) {
-      adminPanel.innerHTML += "<p>✅ No hay productos pendientes.</p>";
-      return;
-    }
-
-    let html = "<ul>";
-    lista.forEach(p => {
-      html += `<li style="margin-bottom:1rem">
-        <strong>${p.nombre}</strong> – ${p.marca} (${p.pais})<br>
-        Ingredientes: ${p.ingredientes.join(", ")}<br>
-        <button onclick='aprobar(${p.id})'>✅ Aprobar</button>
-        <button onclick='rechazar(${p.id})'>❌ Rechazar</button>
-      </li>`;
-    });
-    html += "</ul>";
-
-    adminPanel.innerHTML += html;
-    window.listaPendientes = lista;
-  } catch (err) {
-    adminPanel.innerHTML += "<p style='color:red;'>❌ Error al cargar productos pendientes.</p>";
-    console.error(err);
-  }
-}
-
-// Aprobar producto
-async function aprobar(id) {
-  const producto = window.listaPendientes.find(p => p.id === id);
-  if (!producto) return;
-
-  const ok = confirm(`¿Aprobar "${producto.nombre}" de ${producto.marca}?`);
-  if (!ok) return;
-
-  const res = await fetch("https://verificador-git-main-angels-projects-b6cdd5b1.vercel.app/api/verificador-api", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tipo: "aprobar", producto })
-  });
-
-  if (res.ok) {
-    alert("✅ Producto aprobado");
-    location.reload();
-  } else {
-    alert("❌ Error al aprobar");
-  }
-}
-
-// Rechazar producto
-async function rechazar(id) {
-  const producto = window.listaPendientes.find(p => p.id === id);
-  if (!producto) return;
-
-  const ok = confirm(`¿Rechazar "${producto.nombre}" de ${producto.marca}?`);
-  if (!ok) return;
-
-  const res = await fetch("https://verificador-git-main-angels-projects-b6cdd5b1.vercel.app/api/verificador-api", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tipo: "rechazar", producto })
-  });
-
-  if (res.ok) {
-    alert("🗑️ Producto rechazado");
-    location.reload();
-  } else {
-    alert("❌ Error al rechazar");
-  }
-}
-
-// Mostrar verificador Tahor
-function abrirTahor() {
-  document.getElementById('menuInicial').style.display = 'none';
-  document.getElementById('bloqueTahor').style.display = 'block';
-  document.getElementById('registroManual').style.display = 'block'; // Mostrar el formulario manual siempre
-  resultadoDiv.innerHTML = '';
-  mensajeUsuario.innerHTML = '';
 }
