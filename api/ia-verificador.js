@@ -1,15 +1,31 @@
 const { Configuration, OpenAIApi } = require("openai");
 
 module.exports = async (req, res) => {
-res.setHeader("Access-Control-Allow-Origin", "https://angelos2024.github.io");
-res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  const allowedOrigin = "https://angelos2024.github.io";
 
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
+  res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Vary", "Origin");
+
+  // Manejo de preflight OPTIONS
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  // Validación del método y tipo de contenido
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método no permitido" });
+  }
+
+  if (req.headers["content-type"] !== "application/json") {
+    return res.status(400).json({ error: "Tipo de contenido no válido" });
+  }
 
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "Falta clave de OpenAI" });
+  if (!apiKey) {
+    return res.status(500).json({ error: "Falta clave de OpenAI" });
+  }
 
   const { nombre, ingredientes } = req.body;
   if (!nombre || !Array.isArray(ingredientes)) {
@@ -39,12 +55,15 @@ Responde SOLO en formato JSON como este:
 
     const respuesta = completion.data.choices[0].message.content;
 
-    // Intentamos parsear el JSON
+    // Intentamos parsear el JSON de la IA
     const json = JSON.parse(respuesta);
-    res.status(200).json(json);
+    return res.status(200).json(json);
 
   } catch (error) {
     console.error("Error IA:", error);
-    res.status(500).json({ error: "Error al contactar OpenAI", detalle: error.message });
+    return res.status(500).json({
+      error: "Error al contactar OpenAI",
+      detalle: error.message || error.toString()
+    });
   }
 };
