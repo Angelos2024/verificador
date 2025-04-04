@@ -44,13 +44,14 @@ if (escanearCodigoBtn) {
   });
 }
 
+
 botonBusqueda.addEventListener('click', async () => {
   const marca = document.getElementById('marcaEntrada').value.trim();
   const nombre = document.getElementById('nombreEntrada').value.trim();
   const ean = document.getElementById('eanEntrada')?.value.trim();
 
-  if (!marca || !nombre) {
-    alert("⚠️ Por favor completa la marca y el nombre del producto.");
+  if (!ean && (!marca || !nombre)) {
+    alert("⚠️ Completa al menos Marca y Nombre, o solo Código de Barras.");
     return;
   }
 
@@ -68,6 +69,7 @@ botonBusqueda.addEventListener('click', async () => {
     registroManualDiv.style.display = 'block';
   }
 });
+
 
 async function buscarEnOpenFoodFacts(nombre, ean) {
   try {
