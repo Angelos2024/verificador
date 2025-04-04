@@ -82,13 +82,13 @@ botonBusqueda.addEventListener('click', async () => {
   resultadoDiv.innerHTML += "<p><strong>🤖 Consultando IA (OpenAI)...</strong></p>";
 
   try {
-    const iaRes = await fetch("/api/ia-verificador", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre, ingredientes: [] })
-    }).then(r => r.json());
+const iaRes = await fetch("https://verificador-sigma.vercel.app/api/ia-verificador", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ nombre, ingredientes: [] })
+}).then(r => r.json());
 
-    if (iaRes.resultado) {
+if (iaRes.resultado) {
       resultadoDiv.innerHTML += `
         <p><strong>Resultado IA:</strong> ${iaRes.resultado === "tahor" ? "✅ Apto (Tahor)" : "❌ No Apto (Tame)"}</p>
         <p><em>🧠 Motivo: ${iaRes.motivo}</em></p>`;
