@@ -1,4 +1,13 @@
-// main.js con escaneo opcional, registro abierto, base local y diseño adaptable
+// main.js con normalización, escaneo opcional, base local y diseño adaptable
+
+function normalizeTexto(txt) {
+  return txt
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 const botonBusqueda = document.getElementById('botonBusqueda');
 const escanearCodigoBtn = document.getElementById('escanearCodigo');
@@ -62,12 +71,12 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
     let base = await fetch("https://raw.githubusercontent.com/angelos2024/verificador/main/base_tahor_tame.json")
       .then(r => r.json());
 
-    const nombreLower = nombre.toLowerCase();
-    const marcaLower = marcaGlobal.toLowerCase();
+    const nombreNorm = normalizeTexto(nombreGlobal);
+    const marcaNorm = normalizeTexto(marcaGlobal);
 
     const yaRegistrado = base.find(p =>
-      p.nombre.toLowerCase() === nombreLower &&
-      p.marca.toLowerCase() === marcaLower
+      normalizeTexto(p.nombre) === nombreNorm &&
+      normalizeTexto(p.marca) === marcaNorm
     );
 
     if (yaRegistrado) {
