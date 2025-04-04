@@ -1,10 +1,11 @@
-// main.js completo con singularización, normalización, escaneo, base local y administración
+
+// main.js COMPLETO con IA, base local, normalización, escaneo y panel admin
 
 function normalizeYsingularizar(txt) {
   return txt
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9 ]/g, "")
     .replace(/\s+/g, " ")
     .trim()
@@ -44,7 +45,6 @@ if (escanearCodigoBtn) {
   });
 }
 
-
 botonBusqueda.addEventListener('click', async () => {
   const marca = document.getElementById('marcaEntrada').value.trim();
   const nombre = document.getElementById('nombreEntrada').value.trim();
@@ -59,44 +59,52 @@ botonBusqueda.addEventListener('click', async () => {
   nombreGlobal = nombre;
   eanGlobal = ean;
 
-  resultadoDiv.innerHTML = '<p><strong>🔍 Buscando en base de datos local...</strong></p>';
-  const resultado = await buscarEnOpenFoodFacts(nombre, ean);
+  resultadoDiv.innerHTML = '<p><strong>🔍 Buscando en base local...</strong></p>';
 
-  if (resultado) {
-    resultadoDiv.innerHTML += resultado;
-  } else {
-    resultadoDiv.innerHTML += `<p>🧪 Producto no encontrado. Puedes registrarlo a continuación.</p>`;
-    registroManualDiv.style.display = 'block';
+  const base = await fetch("base_tahor_tame.json").then(r => r.json());
+  const clave = normalizeYsingularizar(marca + " " + nombre);
+  const encontrado = base.find(p =>
+    normalizeYsingularizar(p.marca + " " + p.nombre) === clave
+  );
+
+  if (encontrado) {
+    const ing = encontrado.ingredientes.map(i =>
+      isTame(i) ? `<span style="color:red">${i}</span>` : `<span>${i}</span>`).join(', ');
+    resultadoDiv.innerHTML += `
+      <p><strong>${encontrado.nombre}</strong> – ${encontrado.marca} (${encontrado.pais})</p>
+      <p>Ingredientes: ${ing}</p>
+      <p style="color:${encontrado.tahor ? 'green' : 'red'};">
+        ${encontrado.tahor ? '✅ Apto (Tahor)' : '❌ No Apto (Tame)'}
+      </p>`;
+    return;
   }
-});
 
+  resultadoDiv.innerHTML += "<p><strong>🤖 Consultando IA (OpenAI)...</strong></p>";
+
+  try {
+    const iaRes = await fetch("/api/ia-verificador", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre, ingredientes: [] })
+    }).then(r => r.json());
+
+    if (iaRes.resultado) {
+      resultadoDiv.innerHTML += `
+        <p><strong>Resultado IA:</strong> ${iaRes.resultado === "tahor" ? "✅ Apto (Tahor)" : "❌ No Apto (Tame)"}</p>
+        <p><em>🧠 Motivo: ${iaRes.motivo}</em></p>`;
+      return;
+    }
+  } catch (err) {
+    console.warn("IA no respondió, se continúa con OpenFoodFacts");
+  }
+
+  resultadoDiv.innerHTML += '<p><strong>🌐 Consultando OpenFoodFacts...</strong></p>';
+  const res = await buscarEnOpenFoodFacts(nombre, ean);
+  resultadoDiv.innerHTML += res || "<p>❌ No se encontró información del producto.</p>";
+});
 
 async function buscarEnOpenFoodFacts(nombre, ean) {
   try {
-    let base = await fetch("https://raw.githubusercontent.com/angelos2024/verificador/main/base_tahor_tame.json")
-      .then(r => r.json());
-
-    const nombreNorm = normalizeYsingularizar(nombreGlobal);
-    const marcaNorm = normalizeYsingularizar(marcaGlobal);
-
-    const yaRegistrado = base.find(p =>
-      normalizeYsingularizar(p.nombre) === nombreNorm &&
-      normalizeYsingularizar(p.marca) === marcaNorm
-    );
-
-    if (yaRegistrado) {
-      const htmlIngredientes = yaRegistrado.ingredientes.map(ing => {
-        return isTame(ing)
-          ? `<span style="color:red;">${ing}</span>`
-          : `<span>${ing}</span>`;
-      }).join(', ');
-
-      return `<p><strong>${yaRegistrado.nombre}</strong> – ${yaRegistrado.marca}</p>
-              <p>Ingredientes: ${htmlIngredientes}</p>
-              <p style="color:${yaRegistrado.tahor ? 'green' : 'red'};">
-              ${yaRegistrado.tahor ? '✅ Apto (Tahor)' : '❌ No Apto (Tame)'}</p>`;
-    }
-
     let url = "";
     if (ean && /^[0-9]{8,14}$/.test(ean)) {
       url = `https://world.openfoodfacts.org/api/v0/product/${ean}.json`;
@@ -107,50 +115,19 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
 
     const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
     const data = await res.json();
+    const prod = data.product || (data.products && data.products[0]);
+    if (!prod) return null;
 
-    let producto = null;
-    if (data.status === 1 && data.product) {
-      producto = data.product;
-    } else if (data.products && data.products.length > 0) {
-      producto = data.products[0];
-    }
+    const ingredientes = prod.ingredients_text || "";
+    const lista = ingredientes.toLowerCase().split(/,|\./).map(i => i.trim()).filter(i => i.length > 1);
+    const htmlIng = lista.map(ing => isTame(ing) ? `<span style="color:red">${ing}</span>` : `<span>${ing}</span>`).join(', ');
+    const tame = lista.some(i => isTame(i));
 
-    if (!producto) return null;
-
-    let imagen = producto.image_front_url
-      ? `<img src="${producto.image_front_url}" alt="Imagen del producto" style="max-width:200px;"><br><br>`
-      : '';
-
-    if (!producto.ingredients_text) {
-      registroManualDiv.style.display = 'block';
-      return `<p><strong>${producto.product_name || 'Producto sin nombre'}</strong></p>
-              ${imagen}
-              <p style="color:orange;">⚠️ Producto encontrado pero sin ingredientes disponibles.</p>
-              <p>Por favor, registra el producto manualmente si conoces sus ingredientes.</p>`;
-    }
-
-    const textoIngredientes = producto.ingredients_text.toLowerCase();
-    const lista = textoIngredientes
-      .split(/,|\.|:/)
-      .map(i => i.trim())
-      .filter(i => i.length > 2);
-
-    let htmlIngredientes = lista.map(ing => {
-      return isTame(ing)
-        ? `<span style="color:red;">${ing}</span>`
-        : `<span>${ing}</span>`;
-    }).join(', ');
-
-    const contieneTame = lista.some(i => isTame(i));
-    if (contieneTame) registroManualDiv.style.display = 'block';
-
-    return `<p><strong>${producto.product_name || 'Producto sin nombre oficial'}</strong></p>
-            ${imagen}
-            <p>Ingredientes: ${htmlIngredientes}</p>
-            <p style="color:${contieneTame ? 'red' : 'green'};">
-            ${contieneTame ? '❌ No Apto (Tame)' : '✅ Apto (Tahor)'}</p>`;
-  } catch (err) {
-    console.error("Error al consultar OpenFoodFacts:", err);
+    return `<p><strong>${prod.product_name || 'Producto'}</strong></p>
+            <p>Ingredientes: ${htmlIng}</p>
+            <p style="color:${tame ? 'red' : 'green'};">
+            ${tame ? '❌ No Apto (Tame)' : '✅ Apto (Tahor)'}</p>`;
+  } catch (e) {
     return null;
   }
 }
