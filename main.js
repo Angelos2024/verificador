@@ -1,4 +1,4 @@
-  // main.js con escaneo opcional, registro abierto y diseño adaptable
+// main.js con escaneo opcional, registro abierto y diseño adaptable
 
 const botonBusqueda = document.getElementById('botonBusqueda');
 const escanearCodigoBtn = document.getElementById('escanearCodigo');
@@ -151,11 +151,10 @@ document.getElementById('formRegistroManual').addEventListener('submit', async (
 
     if (existe) {
       mensajeUsuario.innerHTML = "⚠️ Este producto ya está en revisión. ¡Gracias por tu contribución!";
-      registroManualDiv.style.display = 'none';
       return;
     }
 
-   const res = await fetch("https://verificador-git-main-angels-projects-b6cdd5b1.vercel.app/api/verificador-api", {
+    const res = await fetch("https://verificador-git-main-angels-projects-b6cdd5b1.vercel.app/api/verificador-api", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tipo: "pendiente", producto: nuevo })
@@ -166,7 +165,7 @@ document.getElementById('formRegistroManual').addEventListener('submit', async (
     if (res.ok) {
       mensajeUsuario.innerHTML = "✅ Producto enviado a revisión. ¡Gracias!";
       document.getElementById('formRegistroManual').reset();
-      registroManualDiv.style.display = 'none';
+      // No ocultamos el formulario para permitir más aportes
     } else {
       console.error(data);
       mensajeUsuario.innerHTML = "❌ Error al enviar producto.";
@@ -178,8 +177,7 @@ document.getElementById('formRegistroManual').addEventListener('submit', async (
   }
 });
 
-// al final del archivo main.js
-
+// Panel de administración
 async function accederAdmin() {
   const pass = prompt("🔐 Ingresa la contraseña de administrador:");
   if (pass !== "lev11") {
@@ -219,6 +217,7 @@ async function accederAdmin() {
   }
 }
 
+// Aprobar producto
 async function aprobar(id) {
   const producto = window.listaPendientes.find(p => p.id === id);
   if (!producto) return;
@@ -240,6 +239,7 @@ async function aprobar(id) {
   }
 }
 
+// Rechazar producto
 async function rechazar(id) {
   const producto = window.listaPendientes.find(p => p.id === id);
   if (!producto) return;
@@ -261,3 +261,11 @@ async function rechazar(id) {
   }
 }
 
+// Mostrar verificador Tahor
+function abrirTahor() {
+  document.getElementById('menuInicial').style.display = 'none';
+  document.getElementById('bloqueTahor').style.display = 'block';
+  document.getElementById('registroManual').style.display = 'block'; // Mostrar el formulario manual siempre
+  resultadoDiv.innerHTML = '';
+  mensajeUsuario.innerHTML = '';
+}
