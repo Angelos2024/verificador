@@ -155,7 +155,7 @@ document.getElementById('formRegistroManual').addEventListener('submit', async (
       return;
     }
 
-    const res = await fetch("https://angelos2024-verificador.vercel.app/api/verificador-api", {
+   const res = await fetch("https://verificador-git-main-angels-projects-b6cdd5b1.vercel.app/api/verificador-api", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tipo: "pendiente", producto: nuevo })
