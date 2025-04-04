@@ -1,4 +1,4 @@
-// main.js con escaneo opcional, registro abierto y diseño adaptable
+  // main.js con escaneo opcional, registro abierto y diseño adaptable
 
 const botonBusqueda = document.getElementById('botonBusqueda');
 const escanearCodigoBtn = document.getElementById('escanearCodigo');
@@ -177,3 +177,44 @@ document.getElementById('formRegistroManual').addEventListener('submit', async (
     mensajeUsuario.innerHTML = "❌ Error de red al contactar la API.";
   }
 });
+
+// al final del archivo main.js
+
+async function accederAdmin() {
+  const pass = prompt("🔐 Ingresa la contraseña de administrador:");
+  if (pass !== "lev11") {
+    alert("❌ Contraseña incorrecta");
+    return;
+  }
+
+  const adminPanel = document.getElementById('adminPanel');
+  adminPanel.style.display = 'block';
+  adminPanel.innerHTML = "<h2>🔐 Panel de Revisión de Productos</h2><p>Cargando productos pendientes...</p>";
+
+  try {
+    const res = await fetch("https://raw.githubusercontent.com/angelos2024/verificador/main/pendientes.json");
+    const lista = await res.json();
+
+    if (!lista.length) {
+      adminPanel.innerHTML += "<p>✅ No hay productos pendientes.</p>";
+      return;
+    }
+
+    let html = "<ul>";
+    lista.forEach(p => {
+      html += `<li style="margin-bottom:1rem">
+        <strong>${p.nombre}</strong> – ${p.marca} (${p.pais})<br>
+        Ingredientes: ${p.ingredientes.join(", ")}<br>
+        <button onclick='aprobar(${p.id})'>✅ Aprobar</button>
+        <button onclick='rechazar(${p.id})'>❌ Rechazar</button>
+      </li>`;
+    });
+    html += "</ul>";
+
+    adminPanel.innerHTML += html;
+    window.listaPendientes = lista;
+  } catch (err) {
+    adminPanel.innerHTML += "<p style='color:red;'>❌ Error al cargar productos pendientes.</p>";
+    console.error(err);
+  }
+}
