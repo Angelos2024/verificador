@@ -149,3 +149,12 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
     return null;
   }
 }
+
+function abrirTahor() {
+  document.getElementById('menuInicial').style.display = 'none';
+  document.getElementById('bloqueTahor').style.display = 'block';
+  document.getElementById('registroManual').style.display = 'block';
+  resultadoDiv.innerHTML = '';
+  mensajeUsuario.innerHTML = '';
+}
+
