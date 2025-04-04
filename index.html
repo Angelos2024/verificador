@@ -8,17 +8,14 @@
 </head>
 <body>
 <main class="contenedor">
-  <h1>Escáner de Productos Lev 11</h1> <!-- ¡Aquí sí está bien! -->
+  <h1>Escáner de Productos Lev 11</h1>
 
   <div id="menuInicial">
     <button onclick="abrirTahor()">🧪 Verificador de productos Tahor</button>
     <button disabled>🍞 Verificador de productos sin levadura (Próximamente)</button>
   </div>
 
-
-<div id="bloqueTahor" style="display:none">
-  <!-- aquí va TODO lo que ya tenías (formBusquedaProducto, analisisResultado, registroManual, etc) -->
-
+  <div id="bloqueTahor" style="display:none">
     <section id="formBusquedaProducto">
       <h2>Buscar Producto</h2>
 
@@ -51,18 +48,17 @@
       <p id="mensajeUsuario"></p>
     </section>
 
- <section id="adminPanel" style="display:none; margin-top:2rem"></section>
-
+    <section id="adminPanel" style="display:none; margin-top:2rem"></section>
 
     <div style="text-align:center; margin-top: 2rem;">
       <button onclick="accederAdmin()">🔑 Acceso Administrador</button>
     </div>
-</div>
-  </main>
+  </div>
+</main>
 
-  <!-- Scripts -->
-  <script src="tahor-checker.js"></script>
-  <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
-  <script src="main.js"></script>
+<!-- Scripts -->
+<script src="tahor-checker.js"></script>
+<script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
+<script src="main.js"></script>
 </body>
 </html>
