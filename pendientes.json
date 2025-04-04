@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": 1743785095718,
+    "marca": "Chimex",
+    "nombre": "chimex salchicas con pavo",
+    "pais": "Mexico",
+    "ingredientes": [
+      "carnicos (carne de pollo y carne de pavo)",
+      "agua",
+      "harina de trigo",
+      "sal yodada",
+      "saborizantes",
+      "fecula",
+      "cloruro de potasio",
+      "fosfato de sodio",
+      "lactato de potasio",
+      "acetato de potasio",
+      "diacetato de sodio",
+      "eritorbato de sodio",
+      "nitrito de sodio",
+      "carmín."
+    ],
+    "tahor": false,
+    "estado": "pendiente"
+  }
+]
