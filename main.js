@@ -218,3 +218,46 @@ async function accederAdmin() {
     console.error(err);
   }
 }
+
+async function aprobar(id) {
+  const producto = window.listaPendientes.find(p => p.id === id);
+  if (!producto) return;
+
+  const ok = confirm(`¿Aprobar "${producto.nombre}" de ${producto.marca}?`);
+  if (!ok) return;
+
+  const res = await fetch("https://verificador-git-main-angels-projects-b6cdd5b1.vercel.app/api/verificador-api", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tipo: "aprobar", producto })
+  });
+
+  if (res.ok) {
+    alert("✅ Producto aprobado");
+    location.reload();
+  } else {
+    alert("❌ Error al aprobar");
+  }
+}
+
+async function rechazar(id) {
+  const producto = window.listaPendientes.find(p => p.id === id);
+  if (!producto) return;
+
+  const ok = confirm(`¿Rechazar "${producto.nombre}" de ${producto.marca}?`);
+  if (!ok) return;
+
+  const res = await fetch("https://verificador-git-main-angels-projects-b6cdd5b1.vercel.app/api/verificador-api", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tipo: "rechazar", producto })
+  });
+
+  if (res.ok) {
+    alert("🗑️ Producto rechazado");
+    location.reload();
+  } else {
+    alert("❌ Error al rechazar");
+  }
+}
+
