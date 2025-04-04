@@ -1,0 +1,51 @@
+
+const { Configuration, OpenAIApi } = require("openai");
+
+module.exports = async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "Falta clave de OpenAI" });
+
+  const { nombre, ingredientes } = req.body;
+  if (!nombre || !ingredientes || !Array.isArray(ingredientes)) {
+    return res.status(400).json({ error: "Faltan datos de producto" });
+  }
+
+  try {
+    const configuration = new Configuration({ apiKey });
+    const openai = new OpenAIApi(configuration);
+
+    const prompt = `
+Eres un experto en leyes alimentarias de Levítico 11.
+Analiza el siguiente producto y responde si es "Tahor" (apto) o "Tame" (no apto) según sus ingredientes.
+
+Nombre del producto: ${nombre}
+Ingredientes: ${ingredientes.join(", ")}
+
+Responde SOLO en formato JSON como este:
+{ "resultado": "tahor" o "tame", "motivo": "razón breve" }
+`;
+
+    const completion = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.2
+    });
+
+    const respuesta = completion.data.choices[0].message.content;
+
+    // Intentamos parsear el JSON
+    const json = JSON.parse(respuesta);
+    res.status(200).json(json);
+
+  } catch (error) {
+    console.error("Error IA:", error);
+    res.status(500).json({ error: "Error al contactar OpenAI", detalle: error.message });
+  }
+};
