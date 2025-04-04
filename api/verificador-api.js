@@ -13,26 +13,37 @@ module.exports = async (req, res) => {
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const repo = "angelos2024/verificador";
 
-  if (!GITHUB_TOKEN) return res.status(500).json({ error: "Token GitHub no configurado" });
+  if (!GITHUB_TOKEN) {
+    console.error("❌ GITHUB_TOKEN no definido");
+    return res.status(500).json({ error: "Token GitHub no configurado" });
+  }
+
+  console.log("🔐 GITHUB_TOKEN recibido. Inicializando Octokit...");
 
   const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
-  const { tipo, producto } = req.body; // tipo: "pendiente", "aprobar", "rechazar"
+  const { tipo, producto } = req.body;
+
+  console.log("📥 Tipo recibido:", tipo);
+  console.log("📦 Producto recibido:", producto);
 
   try {
     // Obtener SHA y contenido de un archivo JSON del repo
     async function obtenerArchivo(ruta) {
+      console.log(`📂 Obteniendo archivo: ${ruta}`);
       const res = await octokit.repos.getContent({
         owner: "angelos2024",
         repo: "verificador",
         path: ruta
       });
       const json = Buffer.from(res.data.content, 'base64').toString();
+      console.log(`📄 Archivo ${ruta} cargado con éxito`);
       return { sha: res.data.sha, contenido: JSON.parse(json) };
     }
 
     // Guardar un JSON de nuevo al repo
     async function guardarArchivo(ruta, nuevoContenido, mensaje, sha) {
+      console.log(`💾 Guardando archivo: ${ruta}...`);
       const contentEncoded = Buffer.from(JSON.stringify(nuevoContenido, null, 2)).toString("base64");
       await octokit.repos.createOrUpdateFileContents({
         owner: "angelos2024",
@@ -42,6 +53,7 @@ module.exports = async (req, res) => {
         content: contentEncoded,
         sha: sha
       });
+      console.log(`✅ Archivo ${ruta} guardado correctamente`);
     }
 
     if (tipo === "pendiente") {
