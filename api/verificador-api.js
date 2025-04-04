@@ -1,5 +1,5 @@
 // verificador-api.js - Maneja solicitudes POST para pendientes y aprobaciones
-
+ 
 const { Octokit } = require("@octokit/rest");
 
 module.exports = async (req, res) => {
