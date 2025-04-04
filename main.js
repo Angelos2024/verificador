@@ -1,12 +1,16 @@
-// main.js con normalización, escaneo opcional, base local y diseño adaptable
+// main.js completo con singularización, normalización, escaneo, base local y administración
 
-function normalizeTexto(txt) {
+function normalizeYsingularizar(txt) {
   return txt
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9 ]/g, "")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .split(" ")
+    .map(w => w.endsWith("s") && !w.endsWith("es") ? w.slice(0, -1) : w)
+    .join(" ");
 }
 
 const botonBusqueda = document.getElementById('botonBusqueda');
@@ -19,7 +23,6 @@ let marcaGlobal = '';
 let nombreGlobal = '';
 let eanGlobal = '';
 
-// Escaneo de código de barras usando ZXing (opcional)
 if (escanearCodigoBtn) {
   escanearCodigoBtn.addEventListener('click', async () => {
     const codeReader = new ZXing.BrowserBarcodeReader();
@@ -71,12 +74,12 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
     let base = await fetch("https://raw.githubusercontent.com/angelos2024/verificador/main/base_tahor_tame.json")
       .then(r => r.json());
 
-    const nombreNorm = normalizeTexto(nombreGlobal);
-    const marcaNorm = normalizeTexto(marcaGlobal);
+    const nombreNorm = normalizeYsingularizar(nombreGlobal);
+    const marcaNorm = normalizeYsingularizar(marcaGlobal);
 
     const yaRegistrado = base.find(p =>
-      normalizeTexto(p.nombre) === nombreNorm &&
-      normalizeTexto(p.marca) === marcaNorm
+      normalizeYsingularizar(p.nombre) === nombreNorm &&
+      normalizeYsingularizar(p.marca) === marcaNorm
     );
 
     if (yaRegistrado) {
@@ -149,7 +152,6 @@ async function buscarEnOpenFoodFacts(nombre, ean) {
     return null;
   }
 }
-
 
 function abrirTahor() {
   document.getElementById('menuInicial').style.display = 'none';
