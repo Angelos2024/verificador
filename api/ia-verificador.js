@@ -8,6 +8,8 @@ module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   res.setHeader("Vary", "Origin");
 
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
   // Manejo de preflight OPTIONS
   if (req.method === "OPTIONS") {
     return res.status(200).end();
@@ -18,7 +20,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  if (req.headers["content-type"] !== "application/json") {
+if (!req.headers["content-type"]?.includes("application/json")) {
     return res.status(400).json({ error: "Tipo de contenido no válido" });
   }
 
