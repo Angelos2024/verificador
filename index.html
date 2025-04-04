@@ -7,8 +7,17 @@
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <main class="contenedor">
-    <h1>Escáner de Productos Lev 11</h1>
+<main class="contenedor">
+  <h1>Escáner de Productos Lev 11</h1> <!-- ¡Aquí sí está bien! -->
+
+  <div id="menuInicial">
+    <button onclick="abrirTahor()">🧪 Verificador de productos Tahor</button>
+    <button disabled>🍞 Verificador de productos sin levadura (Próximamente)</button>
+  </div>
+
+
+<div id="bloqueTahor" style="display:none">
+  <!-- aquí va TODO lo que ya tenías (formBusquedaProducto, analisisResultado, registroManual, etc) -->
 
     <section id="formBusquedaProducto">
       <h2>Buscar Producto</h2>
@@ -48,6 +57,7 @@
     <div style="text-align:center; margin-top: 2rem;">
       <button onclick="accederAdmin()">🔑 Acceso Administrador</button>
     </div>
+</div>
   </main>
 
   <!-- Scripts -->
